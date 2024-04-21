@@ -7,6 +7,7 @@ import mindustry.ai.*;
 import mindustry.annotations.Annotations.*;
 import mindustry.core.GameState.*;
 import mindustry.ctype.*;
+import mindustry.debug.Debug;
 import mindustry.game.EventType.*;
 import mindustry.game.*;
 import mindustry.game.Teams.*;
@@ -20,6 +21,7 @@ import mindustry.world.blocks.storage.CoreBlock.*;
 import java.util.*;
 
 import static mindustry.Vars.*;
+import static mindustry.debug.Debug.*;
 
 /**
  * Logic module.
@@ -404,6 +406,21 @@ public class Logic implements ApplicationListener{
 
     @Override
     public void update(){
+
+        boolean update;
+        updateTimer += Time.delta;
+        if (updateTimer >= Time.toSeconds){
+            update = true;
+            updateTimer = 0f;
+        }else {
+            update = false;
+        }
+
+        if (update){
+            startUpdateTime = Time.nanos();
+            updateTime = Time.nanos();
+        }
+
         Events.fire(Trigger.update);
         universe.updateGlobal();
 
@@ -415,6 +432,7 @@ public class Logic implements ApplicationListener{
         boolean runStateCheck = !net.client() && !world.isInvalidMap() && !state.isEditor() && state.rules.canGameOver;
 
         if(state.isGame()){
+
             if(!net.client()){
                 state.enemies = Groups.unit.count(u -> u.team() == state.rules.waveTeam && u.isEnemy());
             }
@@ -486,6 +504,10 @@ public class Logic implements ApplicationListener{
             }
         }else if(netServer.isWaitingForPlayers() && runStateCheck){
             checkGameState();
+        }
+
+        if (update){
+            updateTotalTime = Time.timeSinceNanos(startUpdateTime);
         }
     }
 

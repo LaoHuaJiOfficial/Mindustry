@@ -12,6 +12,7 @@ import mindustry.ai.*;
 import mindustry.async.*;
 import mindustry.core.*;
 import mindustry.ctype.*;
+import mindustry.debug.Debug;
 import mindustry.editor.*;
 import mindustry.entities.*;
 import mindustry.game.EventType.*;

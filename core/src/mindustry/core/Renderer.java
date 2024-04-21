@@ -12,7 +12,6 @@ import arc.math.geom.*;
 import arc.scene.ui.layout.*;
 import arc.struct.*;
 import arc.util.*;
-import mindustry.*;
 import mindustry.game.EventType.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
@@ -24,6 +23,7 @@ import mindustry.world.blocks.storage.CoreBlock.*;
 
 import static arc.Core.*;
 import static mindustry.Vars.*;
+import static mindustry.debug.Debug.*;
 
 public class Renderer implements ApplicationListener{
     /** These are global variables, for headless access. Cached. */
@@ -276,6 +276,22 @@ public class Renderer implements ApplicationListener{
         Events.fire(Trigger.preDraw);
         MapPreviewLoader.checkPreviews();
 
+        long startTime = 0, drawTime = 0;
+
+        boolean update;
+        drawTimer += Time.delta;
+        if (drawTimer >= Time.toSeconds){
+            update = true;
+            drawTimer = 0f;
+        }else {
+            update = false;
+        }
+
+        if (update){
+            startTime = Time.nanos();
+            drawTime = Time.nanos();
+        }
+
         camera.update();
 
         if(Float.isNaN(camera.position.x) || Float.isNaN(camera.position.y)){
@@ -297,6 +313,11 @@ public class Renderer implements ApplicationListener{
 
         Draw.sort(true);
 
+        if (update){
+            renderPreRender = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
+
         Events.fire(Trigger.draw);
         MapPreviewLoader.checkPreviews();
 
@@ -312,6 +333,11 @@ public class Renderer implements ApplicationListener{
             blocks.floor.drawLayer(CacheLayer.walls);
             blocks.floor.endDraw();
         });
+
+        if (update){
+            renderFloorWall = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
 
         Draw.drawRange(Layer.blockBuilding, () -> Draw.shader(Shaders.blockbuild, true), Draw::shader);
 
@@ -371,22 +397,60 @@ public class Renderer implements ApplicationListener{
         }
 
         Draw.reset();
+        if (update){
+            renderShaders = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
 
         Draw.draw(Layer.overlayUI, overlays::drawTop);
+
+        if (update){
+            renderOverlayUI = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
+
         if(state.rules.fog) Draw.draw(Layer.fogOfWar, fog::drawFog);
+        if (update){
+            renderFOW = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
         Draw.draw(Layer.space, () -> {
             if(landCore == null || landTime <= 0f) return;
             landCore.drawLanding(launching && launchCoreType != null ? launchCoreType : (CoreBlock)landCore.block);
         });
+        if (update){
+            renderLaunch = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
+
+
 
         Events.fire(Trigger.drawOver);
         blocks.drawBlocks();
+        if (update){
+            renderBuild = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
 
         Groups.draw.draw(Drawc::draw);
+
+        if (update){
+            renderEntity = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
 
         Draw.reset();
         Draw.flush();
         Draw.sort(false);
+
+        if (update){
+            renderFlush = Time.timeSinceNanos(drawTime);
+            drawTime = Time.nanos();
+        }
+
+        if (update){
+            renderTotalTime = Time.timeSinceNanos(startTime);
+        }
 
         Events.fire(Trigger.postDraw);
     }
@@ -561,7 +625,7 @@ public class Renderer implements ApplicationListener{
         int w = world.width() * tilesize, h = world.height() * tilesize;
         int memory = w * h * 4 / 1024 / 1024;
 
-        if(Vars.checkScreenshotMemory && memory >= (mobile ? 65 : 120)){
+        if(checkScreenshotMemory && memory >= (mobile ? 65 : 120)){
             ui.showInfo("@screenshot.invalid");
             return;
         }

@@ -31,6 +31,7 @@ import mindustry.ui.fragments.*;
 
 import static arc.scene.actions.Actions.*;
 import static mindustry.Vars.*;
+import static mindustry.debug.Debug.*;
 
 public class UI implements ApplicationListener, Loadable{
     public static String billions, millions, thousands;
@@ -150,6 +151,23 @@ public class UI implements ApplicationListener, Loadable{
 
     @Override
     public void update(){
+
+        long startTime = 0, drawTime = 0;
+
+        boolean update;
+        UITimer += Time.delta;
+        if (UITimer >= Time.toSeconds){
+            update = true;
+            UITimer = 0f;
+        }else {
+            update = false;
+        }
+
+        if (update){
+            startTime = Time.nanos();
+            drawTime = Time.nanos();
+        }
+
         if(disableUI || Core.scene == null) return;
 
         Events.fire(Trigger.uiDrawBegin);
@@ -165,6 +183,10 @@ public class UI implements ApplicationListener, Loadable{
         }
 
         Events.fire(Trigger.uiDrawEnd);
+
+        if (update){
+            UITotalTime = Time.timeSinceNanos(startTime);
+        }
     }
 
     @Override

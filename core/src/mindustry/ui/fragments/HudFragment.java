@@ -19,6 +19,8 @@ import mindustry.content.*;
 import mindustry.core.GameState.*;
 import mindustry.core.*;
 import mindustry.ctype.*;
+import mindustry.debug.Debug;
+import mindustry.debug.TimeFormat;
 import mindustry.game.EventType.*;
 import mindustry.game.*;
 import mindustry.gen.*;
@@ -931,6 +933,27 @@ public class HudFragment{
                     statuses.clear();
                 }
             }
+        }).left();
+
+        table.row();
+        table.table(info -> {
+            info.left();
+
+            info.label(() -> ">Update Total Time: " +  TimeFormat.get(Debug.updateTotalTime)).left().style(Styles.outlineLabel).row();
+
+            info.label(() -> ">Render Total Time: " +  TimeFormat.get(Debug.renderTotalTime)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Pre-render: " +  TimeFormat.get(Debug.renderPreRender)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Floor & Walls: " +  TimeFormat.get(Debug.renderFloorWall)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Shaders: " +  TimeFormat.get(Debug.renderShaders)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Overlay UI: " +  TimeFormat.get(Debug.renderOverlayUI)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-FOW: " +  TimeFormat.get(Debug.renderFOW)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Launch: " +  TimeFormat.get(Debug.renderLaunch)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Buildings: " +  TimeFormat.get(Debug.renderBuild)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Entities: " +  TimeFormat.get(Debug.renderEntity)).left().style(Styles.outlineLabel).row();
+            info.label(() -> "-Flush: " +  TimeFormat.get(Debug.renderFlush)).left().style(Styles.outlineLabel).row();
+
+            info.label(() -> ">UI Total Time: " +  TimeFormat.get(Debug.UITotalTime)).left().style(Styles.outlineLabel).row();
+
         }).left();
     }
 
