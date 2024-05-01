@@ -429,7 +429,8 @@ public class UnitType extends UnlockableContent implements Senseable{
 
     //(undocumented, you shouldn't need to use these, and if you do just check how they're drawn and copy that)
     public TextureRegion baseRegion, legRegion, region, previewRegion, shadowRegion, cellRegion, itemCircleRegion,
-        softShadowRegion, jointRegion, footRegion, legBaseRegion, baseJointRegion, outlineRegion, treadRegion;
+        softShadowRegion, jointRegion, footRegion, legBaseRegion, baseJointRegion, outlineRegion, treadRegion,
+        mineLaserRegion, mineLaserEndRegion;
     public TextureRegion[] wreckRegions, segmentRegions, segmentOutlineRegions;
     public TextureRegion[][] treadRegions;
 
@@ -849,7 +850,7 @@ public class UnitType extends UnlockableContent implements Senseable{
         if(stances.length == 0){
             if(canAttack){
                 Seq<UnitStance> seq = Seq.with(UnitStance.stop, UnitStance.shoot, UnitStance.holdFire, UnitStance.pursueTarget, UnitStance.patrol);
-                if(crushDamage > 0){
+                if(!flying){
                     seq.add(UnitStance.ram);
                 }
                 stances = seq.toArray(UnitStance.class);
@@ -917,6 +918,9 @@ public class UnitType extends UnlockableContent implements Senseable{
         legBaseRegion = Core.atlas.find(name + "-leg-base", name + "-leg");
         baseRegion = Core.atlas.find(name + "-base");
         cellRegion = Core.atlas.find(name + "-cell", Core.atlas.find("power-cell"));
+
+        mineLaserRegion = Core.atlas.find("minelaser");
+        mineLaserEndRegion = Core.atlas.find("minelaser-end");
         //when linear filtering is on, it's acceptable to use the relatively low-res 'particle' region
         softShadowRegion =
             squareShape ? Core.atlas.find("square-shadow") :
@@ -1193,6 +1197,10 @@ public class UnitType extends UnlockableContent implements Senseable{
     public void draw(Unit unit){
         if(unit.inFogTo(Vars.player.team())) return;
 
+        unit.drawBuilding();
+
+        drawMining(unit);
+
         boolean isPayload = !unit.isAdded();
 
         Mechc mech = unit instanceof Mechc ? (Mechc)unit : null;
@@ -1294,6 +1302,32 @@ public class UnitType extends UnlockableContent implements Senseable{
         }
 
         Draw.reset();
+    }
+
+    public void drawMining(Unit unit){
+        if(!unit.mining()) return;
+        float focusLen = unit.hitSize / 2f + Mathf.absin(Time.time, 1.1f, 0.5f);
+        float swingScl = 12f, swingMag = tilesize / 8f;
+        float flashScl = 0.3f;
+
+        float px = unit.x + Angles.trnsx(unit.rotation, focusLen);
+        float py = unit.y + Angles.trnsy(unit.rotation, focusLen);
+
+        float ex = unit.mineTile.worldx() + Mathf.sin(Time.time + 48, swingScl, swingMag);
+        float ey = unit.mineTile.worldy() + Mathf.sin(Time.time + 48, swingScl + 2f, swingMag);
+
+        Draw.z(Layer.flyingUnit + 0.1f);
+
+        Draw.color(Color.lightGray, Color.white, 1f - flashScl + Mathf.absin(Time.time, 0.5f, flashScl));
+
+        Drawf.laser(mineLaserRegion, mineLaserEndRegion, px, py, ex, ey, 0.75f);
+
+        if(unit.isLocal()){
+            Lines.stroke(1f, Pal.accent);
+            Lines.poly(unit.mineTile.worldx(), unit.mineTile.worldy(), 4, tilesize / 2f * Mathf.sqrt2, Time.time);
+        }
+
+        Draw.color();
     }
 
     public <T extends Unit & Payloadc> void drawPayload(T unit){
